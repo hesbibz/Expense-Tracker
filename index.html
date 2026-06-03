@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Expense Tracker — Smart Naira Budgeting</title>
+  <meta name="description" content="Track your daily expenses in Naira with a beautiful, personal expense tracker dashboard." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ============ SCREEN 1: LOGIN / PROFILE DASHBOARD ============ -->
+  <div class="screen active" id="screen-login">
+    <div class="app-shell">
+      <div class="login-card glass-card">
+        <div class="login-header">
+          <div class="logo-ring">
+            <div class="logo-icon">₦</div>
+          </div>
+          <h1>Welcome Back</h1>
+          <p class="subtitle">Sign in to your expense dashboard</p>
+        </div>
+
+        <form id="login-form" autocomplete="off">
+          <div class="form-group">
+            <label for="input-fullname">Full Name</label>
+            <div class="input-wrap">
+              <span class="input-icon">👤</span>
+              <input type="text" id="input-fullname" placeholder="e.g. Adaeze Okonkwo" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="input-email">Email Address</label>
+            <div class="input-wrap">
+              <span class="input-icon">✉️</span>
+              <input type="email" id="input-email" placeholder="you@example.com" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="input-budget">Monthly Budget (₦)</label>
+            <div class="input-wrap">
+              <span class="input-icon">💰</span>
+              <input type="number" id="input-budget" placeholder="e.g. 150000" min="0" />
+            </div>
+          </div>
+          <button type="submit" class="btn-primary" id="login-btn">
+            <span>Continue to Dashboard</span>
+            <span class="btn-arrow">→</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN 2: EXPENSE TRACKER (MAIN DASHBOARD) ============ -->
+  <div class="screen" id="screen-dashboard">
+    <div class="app-shell">
+      <div class="dashboard-card glass-card">
+
+        <!-- Top bar -->
+        <div class="top-bar">
+          <div class="user-badge" id="user-badge">
+            <div class="avatar" id="avatar-initials">AO</div>
+            <div class="user-info">
+              <span class="user-name" id="display-name">User</span>
+              <span class="user-email" id="display-email">email</span>
+            </div>
+          </div>
+          <button class="icon-btn" id="settings-btn" title="Settings" aria-label="Open settings">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-row">
+          <div class="summary-card summary-total">
+            <span class="summary-label">Total Spent</span>
+            <span class="summary-value" id="total-display">₦0.00</span>
+          </div>
+          <div class="summary-card summary-budget">
+            <span class="summary-label">Budget Left</span>
+            <span class="summary-value" id="budget-left">₦0.00</span>
+          </div>
+          <div class="summary-card summary-count">
+            <span class="summary-label">Items</span>
+            <span class="summary-value" id="item-count">0</span>
+          </div>
+        </div>
+
+        <!-- Budget progress bar -->
+        <div class="budget-bar-wrap" id="budget-bar-wrap" style="display:none;">
+          <div class="budget-bar-label">
+            <span>Budget Usage</span>
+            <span id="budget-percent">0%</span>
+          </div>
+          <div class="budget-bar-track">
+            <div class="budget-bar-fill" id="budget-bar-fill" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Add Expense Section -->
+        <div class="add-section">
+          <div class="add-row">
+            <input type="text" id="expense-name" placeholder="Expense name (e.g. Transport)" />
+            <input type="number" id="expense-amount" placeholder="Amount (₦)" min="0" />
+          </div>
+          <button id="add-btn" class="btn-primary">
+            <span class="btn-plus">+</span> Add Expense
+          </button>
+        </div>
+
+        <!-- Expense List -->
+        <div class="list-section">
+          <div class="list-header">
+            <h2>Recent Expenses</h2>
+            <button class="text-btn" id="clear-all-btn" style="display:none;">Clear All</button>
+          </div>
+          <div id="expense-list"></div>
+          <div class="empty-state" id="empty-state">
+            <div class="empty-icon">📋</div>
+            <p>No expenses yet.</p>
+            <p class="empty-hint">Add your first expense above to get started!</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN 3: SETTINGS PANEL ============ -->
+  <div class="screen" id="screen-settings">
+    <div class="app-shell">
+      <div class="settings-card glass-card">
+
+        <div class="settings-header">
+          <button class="icon-btn" id="settings-back-btn" title="Back" aria-label="Back to dashboard">
+            <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <h2>Settings</h2>
+          <div style="width:38px;"></div>
+        </div>
+
+        <!-- Profile Section -->
+        <div class="settings-section">
+          <h3 class="section-title">Profile</h3>
+          <div class="setting-row">
+            <label for="settings-name">Full Name</label>
+            <input type="text" id="settings-name" placeholder="Your name" />
+          </div>
+          <div class="setting-row">
+            <label for="settings-email">Email</label>
+            <input type="email" id="settings-email" placeholder="Your email" />
+          </div>
+          <div class="setting-row">
+            <label for="settings-budget">Monthly Budget (₦)</label>
+            <input type="number" id="settings-budget" placeholder="e.g. 150000" min="0" />
+          </div>
+        </div>
+
+        <!-- Appearance -->
+        <div class="settings-section">
+          <h3 class="section-title">Appearance</h3>
+          <div class="setting-row toggle-row">
+            <div>
+              <span class="setting-label">Dark Mode</span>
+              <span class="setting-desc">Switch to a dark colour scheme</span>
+            </div>
+            <label class="toggle" for="toggle-dark">
+              <input type="checkbox" id="toggle-dark" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Data -->
+        <div class="settings-section">
+          <h3 class="section-title">Data</h3>
+          <div class="setting-row toggle-row">
+            <div>
+              <span class="setting-label">Budget Alerts</span>
+              <span class="setting-desc">Warn when spending exceeds 80%</span>
+            </div>
+            <label class="toggle" for="toggle-alerts">
+              <input type="checkbox" id="toggle-alerts" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="settings-actions">
+            <button class="btn-outline btn-danger" id="export-btn">📥 Export Data</button>
+            <button class="btn-outline btn-danger" id="clear-data-btn">🗑️ Clear All Data</button>
+          </div>
+        </div>
+
+        <!-- Save -->
+        <button class="btn-primary" id="save-settings-btn">Save Changes</button>
+
+        <!-- Logout -->
+        <button class="btn-outline btn-logout" id="logout-btn">🚪 Log Out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast-container"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
