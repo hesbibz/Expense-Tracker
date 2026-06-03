@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Expense Tracker — Smart Naira Budgeting</title>
-  <meta name="description" content="Track your daily expenses in Naira with a beautiful, personal expense tracker dashboard." />
+  <title>SpendWise — Smart Budgeting</title>
+  <meta name="description" content="Track your daily expenses with SpendWise — a beautiful, personal budgeting dashboard." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -18,10 +18,21 @@
       <div class="login-card glass-card">
         <div class="login-header">
           <div class="logo-ring">
-            <div class="logo-icon">₦</div>
+            <div class="logo-icon">
+              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                <ellipse cx="18" cy="22" rx="10" ry="8" fill="white"/>
+                <ellipse cx="26" cy="24" rx="3.5" ry="2.5" fill="white"/>
+                <path d="M11 17a4 4 0 0 1 3-5 4 4 0 0 1 2.5 4.5" fill="white"/>
+                <circle cx="21" cy="19" r="1.5" fill="#1e8a4a"/>
+                <rect x="14" y="13" width="4" height="1.5" rx="0.7" fill="#1e8a4a" transform="rotate(-8 14 13)"/>
+                <rect x="13" y="28" width="2.5" height="3" rx="1" fill="white"/>
+                <rect x="21" y="28" width="2.5" height="3" rx="1" fill="white"/>
+                <path d="M8 22c-2-1.5-1.5-5 0-6.5" stroke="white" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              </svg>
+            </div>
           </div>
-          <h1>Welcome Back</h1>
-          <p class="subtitle">Sign in to your expense dashboard</p>
+          <h1>SpendWise</h1>
+          <p class="subtitle">Take control of your finances</p>
         </div>
 
         <form id="login-form" autocomplete="off">
@@ -47,9 +58,11 @@
             </div>
           </div>
           <button type="submit" class="btn-primary" id="login-btn">
-            <span>Continue to Dashboard</span>
+            <span>Sign In to Dashboard</span>
             <span class="btn-arrow">→</span>
           </button>
+          <div class="auth-divider"><span>or</span></div>
+          <button type="button" class="btn-outline btn-signup" id="signup-btn">Create New Account</button>
         </form>
       </div>
     </div>
@@ -127,6 +140,25 @@
             <p>No expenses yet.</p>
             <p class="empty-hint">Add your first expense above to get started!</p>
           </div>
+        </div>
+
+        <!-- AI Budget Insights -->
+        <div class="ai-section" id="ai-section" style="display:none;">
+          <div class="ai-header">
+            <span class="ai-icon">🤖</span>
+            <h2>AI Budget Insights</h2>
+          </div>
+          <div class="ai-content" id="ai-content"></div>
+          <button class="btn-outline" id="ai-analyze-btn">🔄 Analyze Spending</button>
+        </div>
+
+        <!-- Monthly Analytics -->
+        <div class="analytics-section" id="analytics-section" style="display:none;">
+          <div class="analytics-header">
+            <span class="analytics-icon">📊</span>
+            <h2>Monthly Review</h2>
+          </div>
+          <div class="analytics-content" id="analytics-content"></div>
         </div>
 
       </div>

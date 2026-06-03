@@ -1,5 +1,5 @@
 /* ============================================
-   EXPENSE TRACKER — PREMIUM DESIGN SYSTEM
+   SPENDWISE — PREMIUM DESIGN SYSTEM
    ============================================ */
 
 /* ---------- CSS Custom Properties ---------- */
@@ -117,7 +117,7 @@ body::after {
   position: fixed;
   inset: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 20px;
   opacity: 0;
@@ -339,6 +339,38 @@ body::after {
 .btn-logout:hover {
   color: var(--danger);
   border-color: var(--danger);
+}
+
+/* ---------- Auth Divider & Sign-up ---------- */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--divider);
+}
+
+.btn-signup {
+  width: 100%;
+  justify-content: center;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.btn-signup:hover {
+  background: var(--accent-light);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .text-btn {
@@ -709,6 +741,168 @@ body::after {
   font-size: 12px !important;
   margin-top: 4px;
   opacity: 0.7;
+}
+
+/* ---------- AI Insights Section ---------- */
+.ai-section {
+  margin-top: 22px;
+  padding: 18px 16px;
+  background: var(--accent-light);
+  border: 1px solid rgba(46, 158, 94, 0.15);
+  border-radius: var(--radius-md);
+  animation: fadeIn 0.3s ease;
+}
+
+.ai-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.ai-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.ai-header h2 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.ai-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.ai-advice {
+  padding: 12px 14px;
+  background: var(--card-bg);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.ai-advice.warn {
+  border-left-color: var(--warning);
+}
+
+.ai-advice.danger {
+  border-left-color: var(--danger);
+}
+
+.ai-advice .advice-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 4px;
+  color: var(--text-muted);
+}
+
+.ai-section .btn-outline {
+  width: 100%;
+  justify-content: center;
+}
+
+/* ---------- ANALYTICS SECTION ---------- */
+.analytics-section {
+  margin-top: 22px;
+  padding: 18px 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-md);
+  animation: fadeIn 0.3s ease;
+}
+
+.analytics-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.analytics-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.analytics-header h2 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.analytics-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.analytics-month {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--input-bg);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+}
+
+.analytics-month:hover {
+  border-color: var(--accent);
+}
+
+.analytics-month-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.analytics-month-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.analytics-month-count {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.analytics-month-right {
+  text-align: right;
+}
+
+.analytics-month-total {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.analytics-month-change {
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+
+.analytics-month-change.down {
+  color: var(--accent);
+}
+
+.analytics-month-change.up {
+  color: var(--warning);
 }
 
 /* ---------- SETTINGS SCREEN ---------- */

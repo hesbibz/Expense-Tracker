@@ -3,10 +3,12 @@
 
   /* ===== STORAGE KEYS ===== */
   const KEYS = {
-    EXPENSES: 'et_expenses',
-    PROFILE: 'et_profile',
-    SETTINGS: 'et_settings',
+    EXPENSES: 'sw_expenses',
+    PROFILE: 'sw_profile',
+    SETTINGS: 'sw_settings',
   };
+
+  var isSignUp = false;
 
   /* ===== STATE ===== */
   let expenses = [];
@@ -44,6 +46,11 @@
   const expenseList = $('expense-list');
   const emptyState = $('empty-state');
   const clearAllBtn = $('clear-all-btn');
+
+  // AI Insights
+  const aiSection = $('ai-section');
+  const aiContent = $('ai-content');
+  const aiAnalyzeBtn = $('ai-analyze-btn');
 
   // Settings
   const settingsBackBtn = $('settings-back-btn');
@@ -150,6 +157,26 @@
     localStorage.setItem(KEYS.SETTINGS, JSON.stringify(settings));
   }
 
+  function migrateLegacyData() {
+    var oldMap = {
+      EXPENSES: 'et_expenses',
+      PROFILE: 'et_profile',
+      SETTINGS: 'et_settings',
+    };
+    var migrated = false;
+    Object.keys(oldMap).forEach(function (key) {
+      var oldVal = localStorage.getItem(oldMap[key]);
+      if (oldVal !== null) {
+        localStorage.setItem(KEYS[key], oldVal);
+        localStorage.removeItem(oldMap[key]);
+        migrated = true;
+      }
+    });
+    if (migrated) {
+      console.log('SpendWise: migrated data from legacy storage keys.');
+    }
+  }
+
   /* ===== SCREEN NAVIGATION ===== */
 
   function showScreen(screen) {
@@ -197,7 +224,13 @@
     updateDashboardProfile();
     renderExpenses();
     showScreen(screenDashboard);
-    showToast('Welcome, ' + name.split(' ')[0] + '! 👋');
+
+    if (isSignUp) {
+      showToast('Welcome to SpendWise, ' + name.split(' ')[0] + '! 🎉');
+      isSignUp = false;
+    } else {
+      showToast('Welcome back, ' + name.split(' ')[0] + '! 👋');
+    }
   }
 
   /* ===== DASHBOARD PROFILE ===== */
@@ -292,6 +325,9 @@
         deleteExpense(btn.dataset.id);
       });
     });
+
+    runAIAnalysis();
+    renderAnalytics();
   }
 
   function addExpense() {
@@ -346,6 +382,213 @@
     showToast('All expenses cleared', 'error');
   }
 
+  /* ===== AI BUDGET INSIGHTS ===== */
+
+  function runAIAnalysis() {
+    if (expenses.length === 0) {
+      aiSection.style.display = 'none';
+      return;
+    }
+
+    var budget = (profile && profile.budget) ? profile.budget : 0;
+    var total = getTotal();
+    var advice = [];
+
+    // Category keywords
+    var categories = {
+      'Food & Drinks': ['food', 'lunch', 'dinner', 'breakfast', 'groceries', 'restaurant', 'eat', 'snack', 'drink', 'water', 'provision'],
+      'Transport': ['transport', 'fuel', 'gas', 'taxi', 'bus', 'uber', 'fare', 'petrol', 'diesel', 'trip'],
+      'Utilities': ['electricity', 'water bill', 'internet', 'phone', 'data', 'bill', 'utility', 'power', 'light'],
+      'Entertainment': ['movie', 'game', 'music', 'fun', 'party', 'cinema', 'subscribe', 'netflix', 'sport'],
+      'Shopping': ['clothes', 'shoes', 'shopping', 'bag', 'accessory', 'fashion', 'wear'],
+      'Health': ['hospital', 'doctor', 'medicine', 'pharmacy', 'health', 'drug', 'clinic'],
+      'Housing': ['rent', 'house', 'accommodation', 'maintenance', 'repair', 'furniture'],
+      'Education': ['school', 'book', 'course', 'tuition', 'fee', 'class', 'training']
+    };
+
+    var catTotals = {};
+
+    expenses.forEach(function (e) {
+      var name = e.name.toLowerCase();
+      var categorized = false;
+      for (var cat in categories) {
+        var keywords = categories[cat];
+        for (var k = 0; k < keywords.length; k++) {
+          if (name.indexOf(keywords[k]) !== -1) {
+            catTotals[cat] = (catTotals[cat] || 0) + e.amount;
+            categorized = true;
+            break;
+          }
+        }
+        if (categorized) break;
+      }
+      if (!categorized) {
+        catTotals['Other'] = (catTotals['Other'] || 0) + e.amount;
+      }
+    });
+
+    var sortedCats = Object.keys(catTotals).sort(function (a, b) {
+      return catTotals[b] - catTotals[a];
+    });
+
+    // Budget-based advice
+    if (budget > 0) {
+      var pct = (total / budget) * 100;
+
+      if (pct > 100) {
+        advice.push({
+          text: 'You have exceeded your monthly budget by ' + formatNaira(total - budget) + '. Reduce non-essential spending for the rest of the month.',
+          type: 'danger',
+          label: 'OVER BUDGET'
+        });
+      } else if (pct >= 80) {
+        advice.push({
+          text: 'You have used ' + Math.round(pct) + '% of your budget with time remaining. Tighten up on discretionary spending.',
+          type: 'warn',
+          label: 'BUDGET WARNING'
+        });
+      } else if (pct <= 30) {
+        advice.push({
+          text: 'Only ' + Math.round(pct) + '% of budget used — excellent discipline. Keep this up and you will save significantly.',
+          type: 'success',
+          label: 'ON TRACK'
+        });
+      }
+
+      // Daily projection
+      var dayOfMonth = new Date().getDate();
+      var daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+      if (dayOfMonth > 0) {
+        var dailyRate = total / dayOfMonth;
+        var projected = dailyRate * daysInMonth;
+        if (projected > budget && pct < 100) {
+          advice.push({
+            text: 'At ₦' + Math.round(dailyRate).toLocaleString() + '/day you are on track to exceed your budget by ' + formatNaira(projected - budget) + ' by month end.',
+            type: 'warn',
+            label: 'PROJECTION'
+          });
+        } else if (projected <= budget && pct > 30) {
+          advice.push({
+            text: 'At ₦' + Math.round(dailyRate).toLocaleString() + '/day you are projected to finish the month within budget. Stay consistent!',
+            type: 'success',
+            label: 'ON TRACK'
+          });
+        }
+      }
+    }
+
+    // Category advice
+    if (sortedCats.length > 0) {
+      var topCat = sortedCats[0];
+      var topAmount = catTotals[topCat];
+      var topPct = (topAmount / total) * 100;
+
+      if (topPct > 35) {
+        advice.push({
+          text: topCat + ' is your biggest spend at ' + Math.round(topPct) + '% (₦' + Math.round(topAmount).toLocaleString() + '). Review if there are cheaper alternatives.',
+          type: topPct > 60 ? 'danger' : 'warn',
+          label: topPct > 60 ? 'MAJITY SPEND' : 'TOP CATEGORY'
+        });
+      }
+
+      // Under-spent categories
+      var lowestCat = sortedCats[sortedCats.length - 1];
+      var lowestAmount = catTotals[lowestCat];
+      var lowestPct = (lowestAmount / total) * 100;
+      if (lowestPct < 5 && sortedCats.length > 2 && lowestCat !== 'Other') {
+        advice.push({
+          text: 'You spent very little on ' + lowestCat + ' (₦' + Math.round(lowestAmount).toLocaleString() + '). Good budgeting if this is non-essential.',
+          type: 'success',
+          label: 'SAVING TIP'
+        });
+      }
+
+      // Average expense insight
+      var avg = total / expenses.length;
+      advice.push({
+        text: 'Average expense: ' + formatNaira(avg) + ' across ' + expenses.length + ' item(s). ' + (avg > 10000 ? 'Try breaking large expenses into smaller, planned purchases.' : 'Your average expense amount looks healthy.'),
+        type: avg > 10000 ? 'warn' : 'success',
+        label: 'AVERAGE'
+      });
+    }
+
+    aiContent.innerHTML = advice.map(function (a) {
+      return '<div class="ai-advice' + (a.type !== 'success' ? ' ' + a.type : '') + '">' +
+        '<span class="advice-label">' + a.label + '</span>' + a.text + '</div>';
+    }).join('');
+
+    aiSection.style.display = 'block';
+  }
+
+  /* ===== MONTHLY ANALYTICS ===== */
+
+  function renderAnalytics() {
+    if (expenses.length === 0) {
+      $('analytics-section').style.display = 'none';
+      return;
+    }
+
+    var months = {};
+    expenses.forEach(function (e) {
+      var d = new Date(e.createdAt);
+      var key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      if (!months[key]) {
+        months[key] = {
+          label: d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+          total: 0,
+          count: 0,
+        };
+      }
+      months[key].total += e.amount;
+      months[key].count++;
+    });
+
+    var sortedKeys = Object.keys(months).sort().reverse();
+
+    if (sortedKeys.length === 0) {
+      $('analytics-section').style.display = 'none';
+      return;
+    }
+
+    var html = '';
+    sortedKeys.forEach(function (key, i) {
+      var m = months[key];
+      var changeHtml = '';
+
+      if (i < sortedKeys.length - 1) {
+        var prevKey = sortedKeys[i + 1];
+        var prev = months[prevKey];
+        var diff = m.total - prev.total;
+        var pct = prev.total > 0 ? Math.round((Math.abs(diff) / prev.total) * 100) : 0;
+        var prevShort = prev.label.split(' ')[0];
+
+        if (diff < 0) {
+          changeHtml = '<span class="analytics-month-change down">↓ ' + pct + '% vs ' + prevShort + '  ✅</span>';
+        } else if (diff > 0) {
+          changeHtml = '<span class="analytics-month-change up">↑ ' + pct + '% vs ' + prevShort + '</span>';
+        } else {
+          changeHtml = '<span class="analytics-month-change" style="color:var(--text-muted)">→ Same as ' + prevShort + '</span>';
+        }
+      } else {
+        changeHtml = '<span class="analytics-month-change" style="color:var(--text-muted)">First month</span>';
+      }
+
+      html += '<div class="analytics-month">' +
+        '<div class="analytics-month-left">' +
+          '<span class="analytics-month-label">' + m.label + '</span>' +
+          '<span class="analytics-month-count">' + m.count + ' expense' + (m.count !== 1 ? 's' : '') + '</span>' +
+        '</div>' +
+        '<div class="analytics-month-right">' +
+          '<div class="analytics-month-total">' + formatNaira(m.total) + '</div>' +
+          changeHtml +
+        '</div>' +
+      '</div>';
+    });
+
+    $('analytics-content').innerHTML = html;
+    $('analytics-section').style.display = 'block';
+  }
+
   /* ===== SETTINGS ===== */
 
   function openSettings() {
@@ -392,7 +635,7 @@
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = 'expense-tracker-export-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.download = 'spendwise-export-' + new Date().toISOString().slice(0, 10) + '.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -429,6 +672,10 @@
   function bindEvents() {
     // Login
     loginForm.addEventListener('submit', handleLogin);
+    $('signup-btn').addEventListener('click', function () {
+      isSignUp = true;
+      loginForm.dispatchEvent(new Event('submit'));
+    });
 
     // Remove error styling on input
     [inputFullname, inputEmail, inputBudget].forEach(function (inp) {
@@ -471,6 +718,9 @@
     clearDataBtn.addEventListener('click', clearAllData);
     logoutBtn.addEventListener('click', logout);
 
+    // AI Analyze
+    aiAnalyzeBtn.addEventListener('click', runAIAnalysis);
+
     // Dark mode live toggle
     toggleDark.addEventListener('change', function () {
       settings.darkMode = toggleDark.checked;
@@ -482,6 +732,7 @@
   /* ===== INIT ===== */
 
   function init() {
+    migrateLegacyData();
     loadAll();
     applyDarkMode(settings.darkMode);
     bindEvents();
