@@ -4,27 +4,27 @@
 
 /* ---------- CSS Custom Properties ---------- */
 :root {
-  /* Palette – Light */
-  --bg-gradient-1: #e8f4f8;
-  --bg-gradient-2: #dff0e4;
-  --bg-gradient-3: #e0e7f0;
-  --card-bg: rgba(255, 255, 255, 0.82);
-  --card-border: rgba(255, 255, 255, 0.55);
-  --card-shadow: 0 8px 40px rgba(0, 40, 80, 0.08), 0 1.5px 6px rgba(0, 0, 0, 0.04);
-  --text-primary: #0f2b3c;
-  --text-secondary: #4a7186;
-  --text-muted: #8eaab9;
+  /* Palette – Green & Navy */
+  --bg-gradient-1: #e4ecf4;
+  --bg-gradient-2: #d8ece0;
+  --bg-gradient-3: #cedde8;
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --card-border: rgba(255, 255, 255, 0.50);
+  --card-shadow: 0 8px 40px rgba(10, 30, 60, 0.10), 0 1.5px 6px rgba(0, 0, 0, 0.04);
+  --text-primary: #0a1e2e;
+  --text-secondary: #2a4a6a;
+  --text-muted: #6a8aa8;
   --accent: #2e9e5e;
   --accent-light: #d0f0dc;
   --accent-gradient: linear-gradient(135deg, #34c26a, #1e8a4a);
-  --input-bg: rgba(240, 247, 250, 0.7);
-  --input-border: #d2e3eb;
+  --input-bg: rgba(225, 238, 245, 0.7);
+  --input-border: #c0d4e4;
   --input-focus: #2e9e5e;
   --danger: #e04040;
   --danger-bg: #fde8e8;
   --warning: #e8a020;
   --warning-bg: #fef3d4;
-  --divider: #e2ecf0;
+  --divider: #d0e0ec;
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 22px;
@@ -35,19 +35,19 @@
 
 /* ---------- Dark Mode ---------- */
 body.dark {
-  --bg-gradient-1: #0c1a24;
-  --bg-gradient-2: #0f2118;
-  --bg-gradient-3: #141824;
-  --card-bg: rgba(22, 34, 44, 0.85);
+  --bg-gradient-1: #0a1628;
+  --bg-gradient-2: #0e1e2a;
+  --bg-gradient-3: #0c1a24;
+  --card-bg: rgba(16, 28, 42, 0.88);
   --card-border: rgba(255, 255, 255, 0.06);
-  --card-shadow: 0 8px 40px rgba(0, 0, 0, 0.35), 0 1.5px 6px rgba(0, 0, 0, 0.2);
-  --text-primary: #e4eff5;
+  --card-shadow: 0 8px 40px rgba(0, 0, 0, 0.40), 0 1.5px 6px rgba(0, 0, 0, 0.2);
+  --text-primary: #e0eaf5;
   --text-secondary: #8ab0c4;
-  --text-muted: #5a8298;
+  --text-muted: #5a7a90;
   --accent: #3ddb76;
   --accent-light: rgba(61, 219, 118, 0.12);
   --accent-gradient: linear-gradient(135deg, #3ddb76, #28b85c);
-  --input-bg: rgba(14, 26, 36, 0.6);
+  --input-bg: rgba(14, 26, 40, 0.6);
   --input-border: rgba(255, 255, 255, 0.08);
   --input-focus: #3ddb76;
   --danger: #f06060;
@@ -92,16 +92,16 @@ body::after {
   animation: floatOrb 18s ease-in-out infinite alternate;
 }
 body::before {
-  width: 420px;
-  height: 420px;
-  background: radial-gradient(circle, rgba(46, 158, 94, 0.4), transparent);
+  width: 440px;
+  height: 440px;
+  background: radial-gradient(circle, rgba(46, 158, 94, 0.35), transparent);
   top: -80px;
   left: -60px;
 }
 body::after {
-  width: 360px;
-  height: 360px;
-  background: radial-gradient(circle, rgba(60, 140, 230, 0.3), transparent);
+  width: 380px;
+  height: 380px;
+  background: radial-gradient(circle, rgba(15, 45, 80, 0.35), transparent);
   bottom: -100px;
   right: -80px;
   animation-delay: -6s;
