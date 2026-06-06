@@ -12,6 +12,7 @@
   let expenses = [];
   let profile = null; // { name, email, password, budget }
   let settings = { darkMode: false, budgetAlerts: true };
+  let selectedMonth = '';
 
   /* ===== DOM CACHE ===== */
   const $ = (id) => document.getElementById(id);
@@ -62,10 +63,12 @@
   const emptyState = $('empty-state');
   const clearAllBtn = $('clear-all-btn');
 
+  // Month Picker
+  const monthPicker = $('month-picker');
+
   // AI Insights
   const aiSection = $('ai-section');
   const aiContent = $('ai-content');
-  const aiAnalyzeBtn = $('ai-analyze-btn');
 
   // Settings
   const settingsBackBtn = $('settings-back-btn');
@@ -305,8 +308,22 @@
     return expenses.reduce(function (sum, e) { return sum + e.amount; }, 0);
   }
 
+  function getMonthExpenses(monthKey) {
+    return expenses.filter(function (e) {
+      var d = new Date(e.createdAt);
+      var key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      return key === monthKey;
+    });
+  }
+
+  function getCurrentMonthKey() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  }
+
   function renderExpenses() {
-    var total = getTotal();
+    var monthExpenses = selectedMonth ? getMonthExpenses(selectedMonth) : expenses;
+    var total = monthExpenses.reduce(function (s, e) { return s + e.amount; }, 0);
     totalDisplay.textContent = formatNaira(total);
 
     // Budget
@@ -365,18 +382,22 @@
     }
 
     // List
-    if (expenses.length === 0) {
+    if (monthExpenses.length === 0) {
       expenseList.innerHTML = '';
       emptyState.style.display = 'block';
+      emptyState.querySelector('p').textContent = expenses.length === 0 ? 'No expenses yet.' : 'No expenses this month.';
+      emptyState.querySelector('.empty-hint').textContent = expenses.length === 0 ? 'Add your first expense above to get started!' : 'Try selecting a different month.';
       clearAllBtn.style.display = 'none';
       return;
     }
 
     emptyState.style.display = 'none';
+    emptyState.querySelector('p').textContent = 'No expenses yet.';
+    emptyState.querySelector('.empty-hint').textContent = 'Add your first expense above to get started!';
     clearAllBtn.style.display = 'inline-block';
 
     // Render newest first for a "recent" feel
-    var sorted = expenses.slice().reverse();
+    var sorted = monthExpenses.slice().reverse();
 
     expenseList.innerHTML = sorted.map(function (e, i) {
       return (
@@ -464,25 +485,105 @@
       return;
     }
 
+    var currentKey = selectedMonth || getCurrentMonthKey();
+    var selYear = parseInt(currentKey.split('-')[0], 10);
+    var selMonth = parseInt(currentKey.split('-')[1], 10) - 1;
+    var prevDate = new Date(selYear, selMonth - 1, 1);
+    var prevKey = prevDate.getFullYear() + '-' + String(prevDate.getMonth() + 1).padStart(2, '0');
+
+    var now = new Date();
+    var currentMonthKey = getCurrentMonthKey();
+    var daysInSelMonth = new Date(selYear, selMonth + 1, 0).getDate();
+    var dayOfMonth = currentKey === currentMonthKey ? now.getDate() : daysInSelMonth;
+    var daysInMonth = daysInSelMonth;
+
+    var monthExp = [];
+    var prevMonthExp = [];
+
+    expenses.forEach(function (e) {
+      var d = new Date(e.createdAt);
+      var key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      if (key === currentKey) monthExp.push(e);
+      if (key === prevKey) prevMonthExp.push(e);
+    });
+
+    // No data this month
+    if (monthExp.length === 0) {
+      var anyOld = expenses.length > 0;
+      if (anyOld) {
+        aiContent.innerHTML = '<div class="ai-advice warn"><span class="advice-label">NO DATA</span>No expenses recorded this month. All your expenses are from previous months — add something this month to get insights!</div>';
+      } else {
+        aiContent.innerHTML = '<div class="ai-advice"><span class="advice-label">EMPTY</span>No expenses to analyze yet. Start tracking to receive personalized budget insights.</div>';
+      }
+      aiSection.style.display = 'block';
+      return;
+    }
+
     var budget = (profile && profile.budget) ? profile.budget : 0;
-    var total = getTotal();
+    var total = monthExp.reduce(function (s, e) { return s + e.amount; }, 0);
+    var count = monthExp.length;
+    var dailyRate = dayOfMonth > 0 ? total / dayOfMonth : 0;
+    var projected = dailyRate * daysInMonth;
     var advice = [];
+
+    // Previous month comparison
+    var prevTotal = prevMonthExp.length > 0 ? prevMonthExp.reduce(function (s, e) { return s + e.amount; }, 0) : 0;
+    var prevCount = prevMonthExp.length;
+
+    if (prevTotal > 0) {
+      var diff = total - prevTotal;
+      var pctChange = Math.round((Math.abs(diff) / prevTotal) * 100);
+      if (diff < 0) {
+        advice.push({
+          text: 'Spending dropped ' + pctChange + '% vs last month (₦' + Math.round(Math.abs(diff)).toLocaleString() + ' less). Good progress!',
+          type: 'success',
+          label: 'SPENDING DOWN'
+        });
+      } else if (diff > 0) {
+        advice.push({
+          text: 'Spending rose ' + pctChange + '% vs last month (₦' + Math.round(diff).toLocaleString() + ' more). Review categories driving the increase.',
+          type: 'warn',
+          label: 'SPENDING UP'
+        });
+      }
+      var countDiff = count - prevCount;
+      if (countDiff > 3) {
+        advice.push({
+          text: 'You made ' + countDiff + ' more transactions this month (' + count + ' vs ' + prevCount + '). More frequent spending can add up — try consolidating purchases.',
+          type: 'warn',
+          label: 'MORE TRANSACTIONS'
+        });
+      } else if (countDiff < -3) {
+        advice.push({
+          text: 'You made ' + Math.abs(countDiff) + ' fewer transactions this month (' + count + ' vs ' + prevCount + '). Fewer purchases usually means better control.',
+          type: 'success',
+          label: 'FEWER TRANSACTIONS'
+        });
+      }
+    } else {
+      advice.push({
+        text: 'This is your first month tracking with SpendWise. Stick to your budget and check back next month for trends!',
+        type: 'success',
+        label: 'FIRST MONTH'
+      });
+    }
 
     // Category keywords
     var categories = {
-      'Food & Drinks': ['food', 'lunch', 'dinner', 'breakfast', 'groceries', 'restaurant', 'eat', 'snack', 'drink', 'water', 'provision'],
-      'Transport': ['transport', 'fuel', 'gas', 'taxi', 'bus', 'uber', 'fare', 'petrol', 'diesel', 'trip'],
-      'Utilities': ['electricity', 'water bill', 'internet', 'phone', 'data', 'bill', 'utility', 'power', 'light'],
-      'Entertainment': ['movie', 'game', 'music', 'fun', 'party', 'cinema', 'subscribe', 'netflix', 'sport'],
-      'Shopping': ['clothes', 'shoes', 'shopping', 'bag', 'accessory', 'fashion', 'wear'],
-      'Health': ['hospital', 'doctor', 'medicine', 'pharmacy', 'health', 'drug', 'clinic'],
-      'Housing': ['rent', 'house', 'accommodation', 'maintenance', 'repair', 'furniture'],
-      'Education': ['school', 'book', 'course', 'tuition', 'fee', 'class', 'training']
+      'Food & Drinks': ['food', 'lunch', 'dinner', 'breakfast', 'groceries', 'restaurant', 'eat', 'snack', 'drink', 'water', 'provision', 'rice', 'bread', 'meat', 'chicken', 'beer', 'beverage', 'coffee', 'tea', 'fruit', 'soup', 'swallow', 'shawarma', 'pizza', 'noodle'],
+      'Transport': ['transport', 'fuel', 'gas', 'taxi', 'bus', 'uber', 'bolt', 'fare', 'petrol', 'diesel', 'trip', 'keke', 'bike', 'okada', 'train', 'airport', 'flight', 'toll'],
+      'Utilities': ['electricity', 'water bill', 'internet', 'phone', 'data', 'bill', 'utility', 'power', 'light', 'prepaid', 'meter', 'cable', 'dstv', 'gotv', 'airtime'],
+      'Entertainment': ['movie', 'game', 'music', 'fun', 'party', 'cinema', 'subscribe', 'netflix', 'sport', 'bet', 'gaming', 'concert', 'outing'],
+      'Shopping': ['clothes', 'shoes', 'shopping', 'bag', 'accessory', 'fashion', 'wear', 'dress', 'shirt', 'trouser', 'shoe', 'sneaker', 'jewelry', 'watch'],
+      'Health': ['hospital', 'doctor', 'medicine', 'pharmacy', 'health', 'drug', 'clinic', 'medical', 'checkup', 'dentist', 'eye', 'surgery', 'insurance'],
+      'Housing': ['rent', 'house', 'accommodation', 'maintenance', 'repair', 'furniture', 'appliance', 'paint', 'plumber', 'electrician', 'cleaning'],
+      'Education': ['school', 'book', 'course', 'tuition', 'fee', 'class', 'training', 'lesson', 'tutor', 'exam', 'form', 'seminar', 'online course']
     };
 
     var catTotals = {};
+    var catCounts = {};
 
-    expenses.forEach(function (e) {
+    monthExp.forEach(function (e) {
       var name = e.name.toLowerCase();
       var categorized = false;
       for (var cat in categories) {
@@ -490,6 +591,7 @@
         for (var k = 0; k < keywords.length; k++) {
           if (name.indexOf(keywords[k]) !== -1) {
             catTotals[cat] = (catTotals[cat] || 0) + e.amount;
+            catCounts[cat] = (catCounts[cat] || 0) + 1;
             categorized = true;
             break;
           }
@@ -498,6 +600,7 @@
       }
       if (!categorized) {
         catTotals['Other'] = (catTotals['Other'] || 0) + e.amount;
+        catCounts['Other'] = (catCounts['Other'] || 0) + 1;
       }
     });
 
@@ -505,47 +608,98 @@
       return catTotals[b] - catTotals[a];
     });
 
+    // Category breakdown
+    if (sortedCats.length > 0) {
+      var catLines = sortedCats.map(function (cat) {
+        var p = Math.round((catTotals[cat] / total) * 100);
+        return '<div class="ai-cat-row"><span class="ai-cat-name">' + cat + '</span><span class="ai-cat-bar"><span class="ai-cat-fill" style="width:' + p + '%"></span></span><span class="ai-cat-amt">' + formatNaira(catTotals[cat]) + '</span></div>';
+      });
+      advice.push({
+        text: '<div class="ai-cat-breakdown">' + catLines.join('') + '</div>',
+        type: 'success',
+        label: 'SPENDING BREAKDOWN'
+      });
+    }
+
     // Budget-based advice
     if (budget > 0) {
       var pct = (total / budget) * 100;
 
       if (pct > 100) {
         advice.push({
-          text: 'You have exceeded your monthly budget by ' + formatNaira(total - budget) + '. Reduce non-essential spending for the rest of the month.',
+          text: 'You have exceeded your monthly budget by ' + formatNaira(total - budget) + '. Focus on essentials only for the rest of the month.',
           type: 'danger',
           label: 'OVER BUDGET'
         });
       } else if (pct >= 80) {
         advice.push({
-          text: 'You have used ' + Math.round(pct) + '% of your budget with time remaining. Tighten up on discretionary spending.',
+          text: 'You have used ' + Math.round(pct) + '% of your budget with ' + (daysInMonth - dayOfMonth) + ' days left. Tighten up on discretionary spending.',
           type: 'warn',
-          label: 'BUDGET WARNING'
+          label: Math.round(pct) + '% USED'
         });
       } else if (pct <= 30) {
         advice.push({
-          text: 'Only ' + Math.round(pct) + '% of budget used — excellent discipline. Keep this up and you will save significantly.',
+          text: 'Only ' + Math.round(pct) + '% of budget used — excellent discipline. You are on track to save ' + formatNaira(budget - projected) + ' this month.',
           type: 'success',
           label: 'ON TRACK'
         });
+      } else {
+        advice.push({
+          text: 'You have used ' + Math.round(pct) + '% of your budget. At ' + formatNaira(Math.round(dailyRate)) + '/day you are on track to end at ' + Math.round((projected / budget) * 100) + '% usage.',
+          type: pct > 60 ? 'warn' : 'success',
+          label: Math.round(pct) + '% USED'
+        });
       }
+    }
 
-      // Daily projection
-      var dayOfMonth = new Date().getDate();
-      var daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
-      if (dayOfMonth > 0) {
-        var dailyRate = total / dayOfMonth;
-        var projected = dailyRate * daysInMonth;
-        if (projected > budget && pct < 100) {
+    // Daily projection (only if not already covered well)
+    if (budget > 0 && pct <= 80) {
+      if (projected > budget) {
+        advice.push({
+          text: 'At ' + formatNaira(Math.round(dailyRate)) + '/day you are projected to exceed budget by ' + formatNaira(projected - budget) + ' by month end. Try cutting back now.',
+          type: 'warn',
+          label: 'PROJECTION'
+        });
+      } else if (projected <= budget && pct > 20 && budget > 0) {
+        advice.push({
+          text: 'At ' + formatNaira(Math.round(dailyRate)) + '/day you are on track to finish the month within budget. Consistent spending — keep it up!',
+          type: 'success',
+          label: 'PROJECTION'
+        });
+      }
+    }
+
+    // Spending frequency
+    var avgPerDay = count / dayOfMonth;
+    if (avgPerDay > 3) {
+      advice.push({
+        text: 'You average ' + avgPerDay.toFixed(1) + ' transactions per day (' + count + ' this month). Many small purchases can drain your wallet — try combining errands.',
+        type: 'warn',
+        label: 'HIGH FREQUENCY'
+      });
+    }
+
+    // Large single expense detection
+    var sortedAmt = monthExp.slice().sort(function (a, b) { return b.amount - a.amount; });
+    if (sortedAmt.length > 2) {
+      var largest = sortedAmt[0];
+      var second = sortedAmt[1];
+      var largestPct = (largest.amount / total) * 100;
+      if (largestPct > 40) {
+        advice.push({
+          text: '"' + largest.name + '" at ' + formatNaira(largest.amount) + ' makes up ' + Math.round(largestPct) + '% of your total. Consider if this was a planned purchase.',
+          type: 'warn',
+          label: 'LARGE EXPENSE'
+        });
+      }
+      if (largest.amount > 50000) {
+        var luxury = ['shoe', 'watch', 'phone', 'laptop', 'tv', 'game', 'shoe', 'bag', 'jewelry', 'fashion'];
+        var isLuxury = luxury.some(function (w) { return largest.name.toLowerCase().indexOf(w) !== -1; });
+        if (isLuxury) {
           advice.push({
-            text: 'At ₦' + Math.round(dailyRate).toLocaleString() + '/day you are on track to exceed your budget by ' + formatNaira(projected - budget) + ' by month end.',
+            text: '"' + largest.name + '" is a high-value purchase. Make sure luxury items fit within your broader savings goals.',
             type: 'warn',
-            label: 'PROJECTION'
-          });
-        } else if (projected <= budget && pct > 30) {
-          advice.push({
-            text: 'At ₦' + Math.round(dailyRate).toLocaleString() + '/day you are projected to finish the month within budget. Stay consistent!',
-            type: 'success',
-            label: 'ON TRACK'
+            label: 'LUXURY CHECK'
           });
         }
       }
@@ -558,64 +712,95 @@
       var sPct = savingsGoal > 0 ? (savings / savingsGoal) * 100 : 0;
       if (sPct >= 100) {
         advice.push({
-          text: 'You have reached your savings goal of ' + formatNaira(savingsGoal) + '! You saved ' + formatNaira(savings) + ' this month.',
+          text: 'Savings goal of ' + formatNaira(savingsGoal) + ' reached! You saved ' + formatNaira(savings) + ' this month. Consider raising your goal.',
           type: 'success',
-          label: 'SAVINGS GOAL MET 🎯'
+          label: 'SAVINGS GOAL MET'
         });
       } else if (sPct >= 50) {
         advice.push({
-          text: 'You are ' + Math.round(sPct) + '% toward your savings goal of ' + formatNaira(savingsGoal) + '. You have saved ' + formatNaira(savings) + ' so far.',
+          text: 'You are ' + Math.round(sPct) + '% toward your savings goal of ' + formatNaira(savingsGoal) + ' (saved ' + formatNaira(savings) + '). Stay on track!',
           type: 'success',
           label: 'SAVINGS ON TRACK'
         });
       } else if (sPct > 0) {
         advice.push({
-          text: 'You have saved ' + formatNaira(savings) + ' (' + Math.round(sPct) + '%) of your ' + formatNaira(savingsGoal) + ' savings goal. Try cutting non-essentials to save more.',
+          text: 'Saved ' + formatNaira(savings) + ' (' + Math.round(sPct) + '%) of your ' + formatNaira(savingsGoal) + ' goal. Cutting back on ' + sortedCats[0] + ' could help you save more.',
           type: 'warn',
           label: 'SAVINGS TARGET'
         });
       }
     } else if (budget > 0 && total < budget) {
-      var savings = budget - total;
       advice.push({
-        text: 'You are on track to save ' + formatNaira(savings) + ' this month. Set a savings goal in Settings to track progress!',
+        text: 'You could save ' + formatNaira(budget - total) + ' this month. Set a savings goal in Settings to track progress!',
         type: 'success',
         label: 'POTENTIAL SAVINGS'
       });
     }
 
-    // Category advice
+    // Top category specific advice
     if (sortedCats.length > 0) {
       var topCat = sortedCats[0];
       var topAmount = catTotals[topCat];
       var topPct = (topAmount / total) * 100;
 
       if (topPct > 35) {
+        var tip = '';
+        if (topCat === 'Food & Drinks') tip = 'Try meal prepping or reducing eating out to cut this down.';
+        else if (topCat === 'Transport') tip = 'Consider carpooling, public transport, or walking short distances.';
+        else if (topCat === 'Shopping') tip = 'Ask yourself if each purchase is a need vs a want.';
+        else if (topCat === 'Entertainment') tip = 'Look for free or cheaper alternatives to paid activities.';
+        else if (topCat === 'Utilities') tip = 'Turn off unused devices and negotiate better plans.';
+        else tip = 'Review if all items in this category are essential.';
         advice.push({
-          text: topCat + ' is your biggest spend at ' + Math.round(topPct) + '% (₦' + Math.round(topAmount).toLocaleString() + '). Review if there are cheaper alternatives.',
-          type: topPct > 60 ? 'danger' : 'warn',
-          label: topPct > 60 ? 'MAJITY SPEND' : 'TOP CATEGORY'
+          text: topCat + ' leads at ' + Math.round(topPct) + '% of spending (' + formatNaira(topAmount) + '). ' + tip,
+          type: topPct > 55 ? 'danger' : 'warn',
+          label: 'TOP SPEND'
         });
       }
 
       // Under-spent categories
       var lowestCat = sortedCats[sortedCats.length - 1];
-      var lowestAmount = catTotals[lowestCat];
-      var lowestPct = (lowestAmount / total) * 100;
+      var lowestPct = (catTotals[lowestCat] / total) * 100;
       if (lowestPct < 5 && sortedCats.length > 2 && lowestCat !== 'Other') {
         advice.push({
-          text: 'You spent very little on ' + lowestCat + ' (₦' + Math.round(lowestAmount).toLocaleString() + '). Good budgeting if this is non-essential.',
+          text: lowestCat + ' accounts for only ' + Math.round(lowestPct) + '% of spending. Good control if discretionary.',
           type: 'success',
-          label: 'SAVING TIP'
+          label: 'LOW SPEND'
         });
       }
+    }
 
-      // Average expense insight
-      var avg = total / expenses.length;
+    // Average expense and balance check
+    var avg = total / count;
+    if (avg > 15000) {
       advice.push({
-        text: 'Average expense: ' + formatNaira(avg) + ' across ' + expenses.length + ' item(s). ' + (avg > 10000 ? 'Try breaking large expenses into smaller, planned purchases.' : 'Your average expense amount looks healthy.'),
-        type: avg > 10000 ? 'warn' : 'success',
+        text: 'Average expense is ' + formatNaira(avg) + ' (' + count + ' items). Large averages may indicate big one-off purchases — review if each was necessary.',
+        type: 'warn',
+        label: 'HIGH AVERAGE'
+      });
+    } else {
+      advice.push({
+        text: 'Average expense is ' + formatNaira(avg) + ' across ' + count + ' item(s) — your transaction sizes look reasonable.',
+        type: 'success',
         label: 'AVERAGE'
+      });
+    }
+
+    // Weekend vs weekday
+    var weekendTotal = 0;
+    var weekdayTotal = 0;
+    monthExp.forEach(function (e) {
+      var d = new Date(e.createdAt);
+      var day = d.getDay();
+      if (day === 0 || day === 6) weekendTotal += e.amount;
+      else weekdayTotal += e.amount;
+    });
+    var weekendPct = (weekendTotal / total) * 100;
+    if (weekendPct > 50) {
+      advice.push({
+        text: Math.round(weekendPct) + '% of your spending happens on weekends. Be mindful of weekend outings and impulse buys.',
+        type: 'warn',
+        label: 'WEEKEND SPENDING'
       });
     }
 
@@ -848,8 +1033,11 @@
     clearDataBtn.addEventListener('click', clearAllData);
     logoutBtn.addEventListener('click', logout);
 
-    // AI Analyze
-    aiAnalyzeBtn.addEventListener('click', runAIAnalysis);
+    // Month picker
+    monthPicker.addEventListener('change', function () {
+      selectedMonth = monthPicker.value;
+      renderExpenses();
+    });
 
     // Dark mode live toggle
     toggleDark.addEventListener('change', function () {
@@ -866,6 +1054,9 @@
     loadAll();
     applyDarkMode(settings.darkMode);
     bindEvents();
+
+    selectedMonth = getCurrentMonthKey();
+    monthPicker.value = selectedMonth;
 
     if (profile && profile.name) {
       updateDashboardProfile();
