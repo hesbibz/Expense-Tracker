@@ -12,63 +12,135 @@
 </head>
 <body>
 
-  <!-- ============ SCREEN 1: LOGIN / PROFILE DASHBOARD ============ -->
-  <div class="screen active" id="screen-login">
+  <!-- ============ SCREEN 1: HOME (LANDING) ============ -->
+  <div class="screen active" id="screen-home">
     <div class="app-shell">
-      <div class="login-card glass-card">
-        <div class="login-header">
+      <div class="home-card">
+        <div class="home-logo-ring">
+          <svg width="50" height="50" viewBox="0 0 36 36" fill="none">
+            <ellipse cx="18" cy="22" rx="10" ry="8" fill="white"/>
+            <ellipse cx="26" cy="24" rx="3.5" ry="2.5" fill="white"/>
+            <path d="M11 17a4 4 0 0 1 3-5 4 4 0 0 1 2.5 4.5" fill="white"/>
+            <circle cx="21" cy="19" r="1.5" fill="#0f2b45"/>
+            <rect x="14" y="13" width="4" height="1.5" rx="0.7" fill="#0f2b45" transform="rotate(-8 14 13)"/>
+            <rect x="13" y="28" width="2.5" height="3" rx="1" fill="white"/>
+            <rect x="21" y="28" width="2.5" height="3" rx="1" fill="white"/>
+            <path d="M8 22c-2-1.5-1.5-5 0-6.5" stroke="white" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h1 class="home-title">SpendWise</h1>
+        <p class="home-tagline">Take control of your finances</p>
+        <div class="home-actions">
+          <button class="btn-primary btn-sky" id="home-login-btn">Log In</button>
+          <button class="btn-primary btn-mustard" id="home-signup-btn">Sign Up</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN 2: SIGN IN ============ -->
+  <div class="screen" id="screen-signin">
+    <div class="app-shell">
+      <div class="auth-card glass-card">
+        <div class="auth-header">
           <div class="logo-ring">
             <div class="logo-icon">
               <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
                 <ellipse cx="18" cy="22" rx="10" ry="8" fill="white"/>
                 <ellipse cx="26" cy="24" rx="3.5" ry="2.5" fill="white"/>
                 <path d="M11 17a4 4 0 0 1 3-5 4 4 0 0 1 2.5 4.5" fill="white"/>
-                <circle cx="21" cy="19" r="1.5" fill="#1e8a4a"/>
-                <rect x="14" y="13" width="4" height="1.5" rx="0.7" fill="#1e8a4a" transform="rotate(-8 14 13)"/>
+                <circle cx="21" cy="19" r="1.5" fill="#0f2b45"/>
+                <rect x="14" y="13" width="4" height="1.5" rx="0.7" fill="#0f2b45" transform="rotate(-8 14 13)"/>
                 <rect x="13" y="28" width="2.5" height="3" rx="1" fill="white"/>
                 <rect x="21" y="28" width="2.5" height="3" rx="1" fill="white"/>
                 <path d="M8 22c-2-1.5-1.5-5 0-6.5" stroke="white" stroke-width="1.3" fill="none" stroke-linecap="round"/>
               </svg>
             </div>
           </div>
-          <h1>SpendWise</h1>
-          <p class="subtitle">Take control of your finances</p>
+          <h1>Welcome Back</h1>
         </div>
 
-        <form id="login-form" autocomplete="off">
+        <form id="signin-form" autocomplete="off">
           <div class="form-group">
-            <label for="input-fullname">Full Name</label>
-            <div class="input-wrap">
-              <span class="input-icon">👤</span>
-              <input type="text" id="input-fullname" placeholder="e.g. Adaeze Okonkwo" required />
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="input-email">Email Address</label>
+            <label for="signin-email">Email Address</label>
             <div class="input-wrap">
               <span class="input-icon">✉️</span>
-              <input type="email" id="input-email" placeholder="you@example.com" required />
+              <input type="email" id="signin-email" placeholder="you@example.com" required />
             </div>
           </div>
           <div class="form-group">
-            <label for="input-budget">Monthly Budget (₦)</label>
+            <label for="signin-password">Password</label>
             <div class="input-wrap">
-              <span class="input-icon">💰</span>
-              <input type="number" id="input-budget" placeholder="e.g. 150000" min="0" />
+              <span class="input-icon">🔒</span>
+              <input type="password" id="signin-password" placeholder="Enter your password" required />
             </div>
           </div>
-          <button type="submit" class="btn-primary" id="login-btn">
-            <span>Sign In to Dashboard</span>
-            <span class="btn-arrow">→</span>
-          </button>
-          <div class="auth-divider"><span>or</span></div>
-          <button type="button" class="btn-outline btn-signup" id="signup-btn">Create New Account</button>
+          <button type="submit" class="btn-primary btn-sky">Sign In</button>
+          <div class="auth-nav">Don't have an account? <a id="goto-signup">Create one</a></div>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- ============ SCREEN 2: EXPENSE TRACKER (MAIN DASHBOARD) ============ -->
+  <!-- ============ SCREEN 3: SIGN UP ============ -->
+  <div class="screen" id="screen-signup">
+    <div class="app-shell">
+      <div class="auth-card glass-card">
+        <div class="auth-header">
+          <div class="logo-ring">
+            <div class="logo-icon">
+              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                <ellipse cx="18" cy="22" rx="10" ry="8" fill="white"/>
+                <ellipse cx="26" cy="24" rx="3.5" ry="2.5" fill="white"/>
+                <path d="M11 17a4 4 0 0 1 3-5 4 4 0 0 1 2.5 4.5" fill="white"/>
+                <circle cx="21" cy="19" r="1.5" fill="#0f2b45"/>
+                <rect x="14" y="13" width="4" height="1.5" rx="0.7" fill="#0f2b45" transform="rotate(-8 14 13)"/>
+                <rect x="13" y="28" width="2.5" height="3" rx="1" fill="white"/>
+                <rect x="21" y="28" width="2.5" height="3" rx="1" fill="white"/>
+                <path d="M8 22c-2-1.5-1.5-5 0-6.5" stroke="white" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+          <h1>Create Account</h1>
+        </div>
+
+        <form id="signup-form" autocomplete="off">
+          <div class="form-group">
+            <label for="signup-name">Full Name</label>
+            <div class="input-wrap">
+              <span class="input-icon">👤</span>
+              <input type="text" id="signup-name" placeholder="e.g. Adaeze Okonkwo" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="signup-email">Email Address</label>
+            <div class="input-wrap">
+              <span class="input-icon">✉️</span>
+              <input type="email" id="signup-email" placeholder="you@example.com" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="signup-password">Password</label>
+            <div class="input-wrap">
+              <span class="input-icon">🔒</span>
+              <input type="password" id="signup-password" placeholder="Create a password" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="signup-budget">Monthly Budget (₦)</label>
+            <div class="input-wrap">
+              <span class="input-icon">💰</span>
+              <input type="number" id="signup-budget" placeholder="e.g. 150000" min="0" />
+            </div>
+          </div>
+          <button type="submit" class="btn-primary btn-mustard">Create Account</button>
+          <div class="auth-nav">Already have an account? <a id="goto-signin">Log In</a></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SCREEN 4: EXPENSE TRACKER (MAIN DASHBOARD) ============ -->
   <div class="screen" id="screen-dashboard">
     <div class="app-shell">
       <div class="dashboard-card glass-card">
@@ -100,13 +172,13 @@
             <span class="summary-label">Budget Left</span>
             <span class="summary-value" id="budget-left">₦0.00</span>
           </div>
-          <div class="summary-card summary-count">
-            <span class="summary-label">Items</span>
-            <span class="summary-value" id="item-count">0</span>
+          <div class="summary-card summary-savings">
+            <span class="summary-label">Savings</span>
+            <span class="summary-value" id="savings-display">₦0.00</span>
           </div>
         </div>
 
-        <!-- Budget progress bar -->
+        <!-- Budget & Savings Progress -->
         <div class="budget-bar-wrap" id="budget-bar-wrap" style="display:none;">
           <div class="budget-bar-label">
             <span>Budget Usage</span>
@@ -114,6 +186,16 @@
           </div>
           <div class="budget-bar-track">
             <div class="budget-bar-fill" id="budget-bar-fill" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <div class="savings-bar-wrap" id="savings-bar-wrap" style="display:none;">
+          <div class="budget-bar-label">
+            <span>Savings Goal</span>
+            <span id="savings-percent">0%</span>
+          </div>
+          <div class="budget-bar-track">
+            <div class="savings-bar-fill" id="savings-bar-fill" style="width: 0%"></div>
           </div>
         </div>
 
@@ -165,7 +247,7 @@
     </div>
   </div>
 
-  <!-- ============ SCREEN 3: SETTINGS PANEL ============ -->
+  <!-- ============ SCREEN 5: SETTINGS PANEL ============ -->
   <div class="screen" id="screen-settings">
     <div class="app-shell">
       <div class="settings-card glass-card">
@@ -194,6 +276,10 @@
           <div class="setting-row">
             <label for="settings-budget">Monthly Budget (₦)</label>
             <input type="number" id="settings-budget" placeholder="e.g. 150000" min="0" />
+          </div>
+          <div class="setting-row">
+            <label for="settings-savings-goal">Monthly Savings Goal (₦)</label>
+            <input type="number" id="settings-savings-goal" placeholder="e.g. 30000" min="0" />
           </div>
         </div>
 

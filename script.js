@@ -8,26 +8,38 @@
     SETTINGS: 'sw_settings',
   };
 
-  var isSignUp = false;
-
   /* ===== STATE ===== */
   let expenses = [];
-  let profile = null; // { name, email, budget }
+  let profile = null; // { name, email, password, budget }
   let settings = { darkMode: false, budgetAlerts: true };
 
   /* ===== DOM CACHE ===== */
   const $ = (id) => document.getElementById(id);
 
   // Screens
-  const screenLogin = $('screen-login');
+  const screenHome = $('screen-home');
+  const screenSignin = $('screen-signin');
+  const screenSignup = $('screen-signup');
   const screenDashboard = $('screen-dashboard');
   const screenSettings = $('screen-settings');
 
-  // Login form
-  const loginForm = $('login-form');
-  const inputFullname = $('input-fullname');
-  const inputEmail = $('input-email');
-  const inputBudget = $('input-budget');
+  // Home
+  const homeLoginBtn = $('home-login-btn');
+  const homeSignupBtn = $('home-signup-btn');
+
+  // Sign In form
+  const signinForm = $('signin-form');
+  const signinEmail = $('signin-email');
+  const signinPassword = $('signin-password');
+  const gotoSignup = $('goto-signup');
+
+  // Sign Up form
+  const signupForm = $('signup-form');
+  const signupName = $('signup-name');
+  const signupEmail = $('signup-email');
+  const signupPassword = $('signup-password');
+  const signupBudget = $('signup-budget');
+  const gotoSignin = $('goto-signin');
 
   // Dashboard
   const avatarInitials = $('avatar-initials');
@@ -36,10 +48,13 @@
   const settingsBtn = $('settings-btn');
   const totalDisplay = $('total-display');
   const budgetLeft = $('budget-left');
-  const itemCount = $('item-count');
+  const savingsDisplay = $('savings-display');
   const budgetBarWrap = $('budget-bar-wrap');
   const budgetPercent = $('budget-percent');
   const budgetBarFill = $('budget-bar-fill');
+  const savingsBarWrap = $('savings-bar-wrap');
+  const savingsPercent = $('savings-percent');
+  const savingsBarFill = $('savings-bar-fill');
   const expenseNameInput = $('expense-name');
   const expenseAmountInput = $('expense-amount');
   const addBtn = $('add-btn');
@@ -57,6 +72,7 @@
   const settingsName = $('settings-name');
   const settingsEmail = $('settings-email');
   const settingsBudget = $('settings-budget');
+  const settingsSavingsGoal = $('settings-savings-goal');
   const toggleDark = $('toggle-dark');
   const toggleAlerts = $('toggle-alerts');
   const saveSettingsBtn = $('save-settings-btn');
@@ -180,10 +196,9 @@
   /* ===== SCREEN NAVIGATION ===== */
 
   function showScreen(screen) {
-    [screenLogin, screenDashboard, screenSettings].forEach(function (s) {
+    [screenHome, screenSignin, screenSignup, screenDashboard, screenSettings].forEach(function (s) {
       s.classList.remove('active');
     });
-    // Small delay to allow CSS transition
     requestAnimationFrame(function () {
       screen.classList.add('active');
     });
@@ -200,37 +215,79 @@
     toggleDark.checked = on;
   }
 
-  /* ===== LOGIN ===== */
+  /* ===== SIGN IN ===== */
 
-  function handleLogin(e) {
+  function handleSignIn(e) {
     e.preventDefault();
 
-    var name = inputFullname.value.trim();
-    var email = inputEmail.value.trim();
-    var budget = parseFloat(inputBudget.value) || 0;
+    var email = signinEmail.value.trim();
+    var password = signinPassword.value;
 
-    if (!name) {
-      inputFullname.parentElement.querySelector('input').classList.add('error');
+    if (!email) { showToast('Please enter your email', 'error'); return; }
+    if (!password) { showToast('Please enter your password', 'error'); return; }
+
+    var stored = localStorage.getItem(KEYS.PROFILE);
+    if (!stored) {
+      signinPassword.value = '';
+      showToast('No account found. Please sign up first.', 'error');
       return;
     }
-    if (!email) {
-      inputEmail.parentElement.querySelector('input').classList.add('error');
+
+    var storedProfile;
+    try { storedProfile = JSON.parse(stored); } catch (e) { storedProfile = null; }
+
+    if (!storedProfile || storedProfile.email !== email) {
+      signinPassword.value = '';
+      showToast('Invalid email or password.', 'error');
       return;
     }
 
-    profile = { name: name, email: email, budget: budget };
+    if (storedProfile.password && storedProfile.password !== password) {
+      signinPassword.value = '';
+      showToast('Invalid email or password.', 'error');
+      return;
+    }
+
+    profile = storedProfile;
     saveProfile();
 
     updateDashboardProfile();
     renderExpenses();
     showScreen(screenDashboard);
+    showToast('Welcome back, ' + profile.name.split(' ')[0] + '! 👋');
+  }
 
-    if (isSignUp) {
-      showToast('Welcome to SpendWise, ' + name.split(' ')[0] + '! 🎉');
-      isSignUp = false;
-    } else {
-      showToast('Welcome back, ' + name.split(' ')[0] + '! 👋');
+  /* ===== SIGN UP ===== */
+
+  function handleSignUp(e) {
+    e.preventDefault();
+
+    var name = signupName.value.trim();
+    var email = signupEmail.value.trim();
+    var password = signupPassword.value;
+    var budget = parseFloat(signupBudget.value) || 0;
+
+    if (!name) { showToast('Please enter your full name', 'error'); return; }
+    if (!email) { showToast('Please enter your email', 'error'); return; }
+    if (!password || password.length < 4) { showToast('Password must be at least 4 characters', 'error'); return; }
+
+    var existing = localStorage.getItem(KEYS.PROFILE);
+    if (existing) {
+      var existingProfile;
+      try { existingProfile = JSON.parse(existing); } catch (e) { existingProfile = null; }
+      if (existingProfile && existingProfile.email === email) {
+        showToast('An account with this email already exists.', 'error');
+        return;
+      }
     }
+
+    profile = { name: name, email: email, password: password, budget: budget, savingsGoal: 0 };
+    saveProfile();
+
+    updateDashboardProfile();
+    renderExpenses();
+    showScreen(screenDashboard);
+    showToast('Welcome to SpendWise, ' + name.split(' ')[0] + '! 🎉');
   }
 
   /* ===== DASHBOARD PROFILE ===== */
@@ -251,10 +308,11 @@
   function renderExpenses() {
     var total = getTotal();
     totalDisplay.textContent = formatNaira(total);
-    itemCount.textContent = expenses.length;
 
     // Budget
     var budget = (profile && profile.budget) ? profile.budget : 0;
+    var savingsGoal = (profile && profile.savingsGoal) ? profile.savingsGoal : 0;
+
     if (budget > 0) {
       budgetBarWrap.style.display = 'block';
       var left = budget - total;
@@ -285,9 +343,25 @@
       if (left < 0) {
         budgetLeft.textContent = '-' + formatNaira(Math.abs(left));
       }
+
+      // Savings
+      var savings = Math.max(left, 0);
+      savingsDisplay.textContent = formatNaira(savings);
+
+      if (savingsGoal > 0) {
+        savingsBarWrap.style.display = 'block';
+        var sPct = Math.min((savings / savingsGoal) * 100, 100);
+        savingsPercent.textContent = Math.round(sPct) + '%';
+        savingsBarFill.style.width = sPct + '%';
+        savingsBarFill.classList.toggle('complete', sPct >= 100);
+      } else {
+        savingsBarWrap.style.display = 'none';
+      }
     } else {
       budgetBarWrap.style.display = 'none';
       budgetLeft.textContent = '—';
+      savingsDisplay.textContent = '—';
+      savingsBarWrap.style.display = 'none';
     }
 
     // List
@@ -477,6 +551,39 @@
       }
     }
 
+    // Savings advice
+    var savingsGoal = (profile && profile.savingsGoal) ? profile.savingsGoal : 0;
+    if (budget > 0 && savingsGoal > 0) {
+      var savings = Math.max(budget - total, 0);
+      var sPct = savingsGoal > 0 ? (savings / savingsGoal) * 100 : 0;
+      if (sPct >= 100) {
+        advice.push({
+          text: 'You have reached your savings goal of ' + formatNaira(savingsGoal) + '! You saved ' + formatNaira(savings) + ' this month.',
+          type: 'success',
+          label: 'SAVINGS GOAL MET 🎯'
+        });
+      } else if (sPct >= 50) {
+        advice.push({
+          text: 'You are ' + Math.round(sPct) + '% toward your savings goal of ' + formatNaira(savingsGoal) + '. You have saved ' + formatNaira(savings) + ' so far.',
+          type: 'success',
+          label: 'SAVINGS ON TRACK'
+        });
+      } else if (sPct > 0) {
+        advice.push({
+          text: 'You have saved ' + formatNaira(savings) + ' (' + Math.round(sPct) + '%) of your ' + formatNaira(savingsGoal) + ' savings goal. Try cutting non-essentials to save more.',
+          type: 'warn',
+          label: 'SAVINGS TARGET'
+        });
+      }
+    } else if (budget > 0 && total < budget) {
+      var savings = budget - total;
+      advice.push({
+        text: 'You are on track to save ' + formatNaira(savings) + ' this month. Set a savings goal in Settings to track progress!',
+        type: 'success',
+        label: 'POTENTIAL SAVINGS'
+      });
+    }
+
     // Category advice
     if (sortedCats.length > 0) {
       var topCat = sortedCats[0];
@@ -596,6 +703,7 @@
       settingsName.value = profile.name || '';
       settingsEmail.value = profile.email || '';
       settingsBudget.value = profile.budget || '';
+      settingsSavingsGoal.value = profile.savingsGoal || '';
     }
     toggleDark.checked = settings.darkMode;
     toggleAlerts.checked = settings.budgetAlerts;
@@ -607,10 +715,12 @@
     var name = settingsName.value.trim();
     var email = settingsEmail.value.trim();
     var budget = parseFloat(settingsBudget.value) || 0;
+    var savingsGoal = parseFloat(settingsSavingsGoal.value) || 0;
 
     if (name) profile.name = name;
     if (email) profile.email = email;
     profile.budget = budget;
+    profile.savingsGoal = savingsGoal;
     saveProfile();
 
     // App settings
@@ -652,37 +762,57 @@
     profile = null;
     settings = { darkMode: false, budgetAlerts: true };
     applyDarkMode(false);
-    showScreen(screenLogin);
+    showScreen(screenHome);
     showToast('All data cleared', 'error');
   }
 
   function logout() {
-    showScreen(screenLogin);
-    // Pre-fill login form with existing profile data for convenience
-    if (profile) {
-      inputFullname.value = profile.name || '';
-      inputEmail.value = profile.email || '';
-      inputBudget.value = profile.budget || '';
-    }
+    showScreen(screenHome);
     showToast('Logged out');
   }
 
   /* ===== EVENT BINDING ===== */
 
+  function clearAuthForms() {
+    signinEmail.value = '';
+    signinPassword.value = '';
+    signupName.value = '';
+    signupEmail.value = '';
+    signupPassword.value = '';
+    signupBudget.value = '';
+  }
+
   function bindEvents() {
-    // Login
-    loginForm.addEventListener('submit', handleLogin);
-    $('signup-btn').addEventListener('click', function () {
-      isSignUp = true;
-      loginForm.dispatchEvent(new Event('submit'));
+    // Home
+    homeLoginBtn.addEventListener('click', function () {
+      signinEmail.value = '';
+      signinPassword.value = '';
+      showScreen(screenSignin);
+    });
+    homeSignupBtn.addEventListener('click', function () {
+      clearAuthForms();
+      showScreen(screenSignup);
     });
 
-    // Remove error styling on input
-    [inputFullname, inputEmail, inputBudget].forEach(function (inp) {
-      inp.addEventListener('input', function () {
-        inp.classList.remove('error');
-      });
+    // Auth nav
+    gotoSignup.addEventListener('click', function () {
+      signupName.value = '';
+      signupEmail.value = '';
+      signupPassword.value = '';
+      signupBudget.value = '';
+      showScreen(screenSignup);
     });
+    gotoSignin.addEventListener('click', function () {
+      signinEmail.value = '';
+      signinPassword.value = '';
+      showScreen(screenSignin);
+    });
+
+    // Sign In
+    signinForm.addEventListener('submit', handleSignIn);
+
+    // Sign Up
+    signupForm.addEventListener('submit', handleSignUp);
 
     // Dashboard
     settingsBtn.addEventListener('click', openSettings);
@@ -738,12 +868,11 @@
     bindEvents();
 
     if (profile && profile.name) {
-      // Already logged in → go to dashboard
       updateDashboardProfile();
       renderExpenses();
       showScreen(screenDashboard);
     } else {
-      showScreen(screenLogin);
+      showScreen(screenHome);
     }
   }
 
